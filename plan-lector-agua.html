@@ -486,6 +486,52 @@ footer {
 .modal-lab-error { color: #b01824; font-size: .9rem; margin-top: 8px; }
 .modal-lab-acciones { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .modal-lab-acciones .btn { font-size: 1.05rem; padding: 9px 20px; }
+
+/* ============================================================
+   9. PANTALLAS "ACTIVIDADES": una plantilla, una pantalla por actividad
+   Alto fijo (720 px = 16:9): todas las zonas están reservadas desde el inicio,
+   así nada cambia de lugar cuando algo aparece (solo cambia la visibilidad).
+   ============================================================ */
+.pantalla.act-pantalla { height: 720px; min-height: 0; padding: 138px 52px 30px; justify-content: flex-start; align-items: stretch; gap: 10px; }
+
+/* Lo que aparece poco a poco: ocupa su lugar pero no se ve hasta tener la clase "ver" */
+.act-vel { opacity: 0; visibility: hidden; transition: opacity .4s; }
+.act-vel.ver { opacity: 1; visibility: visible; }
+
+/* Título */
+.act-titulo { height: 50px; display: flex; align-items: center; gap: 14px; }
+.pantalla .act-titulo h2 { font-size: 2.7rem; line-height: 1; }
+.act-paso { margin-left: auto; font-size: 1rem; font-weight: 600; color: #5d8199; }
+
+/* Consigna: contexto en texto normal + pregunta en recuadro azul (reutiliza .pregunta) */
+.act-consigna { height: 152px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.act-contexto { font-size: 1.45rem; line-height: 1.25; }
+.act-consigna .pregunta { font-size: 1.8rem; padding: 8px 26px; margin: 0; max-width: none; }
+
+/* Fila central: imagen | modelización | explicación */
+.act-fila { height: 240px; display: grid; grid-template-columns: 220px 1fr 290px; gap: 14px; }
+.act-foto { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.act-img { height: 192px; border-radius: 18px; overflow: hidden; border: 3px solid #bfe9fa; background: #e3f6ff; }
+.act-img img, .act-img svg { width: 100%; height: 100%; display: block; object-fit: cover; }
+.act-credito { font-size: .8rem; line-height: 1.15; height: 2.3em; overflow: hidden; color: #5d8199; text-align: center; }
+
+.act-modelo {
+  border: 3px solid #bfe9fa; border-radius: 20px; padding: 6px 14px; background: #fff; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.act-modelo h3 { font-family: var(--f-texto); font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; color: #5d8199; font-weight: 600; }
+.act-modelo .lab-oculta { font-size: 2rem; }
+.act-modelo .lab-tick span { font-size: 1.35rem; }              /* números más grandes para la TV */
+.act-modelo .lab-tick.extremo span { font-size: 1.6rem; }
+.lab-barra.anim { transform-origin: left center; animation: crecer 1s ease-out; }   /* el tramo "crece" (reutiliza @keyframes crecer) */
+
+.act-expl-zona { display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }   /* explicación alineada abajo */
+.act-expl { font-size: 1.2rem; line-height: 1.3; }
+
+/* RPTA */
+.act-rpta { height: 66px; display: flex; align-items: center; gap: 16px; padding: 0 16px; background: #fff; border: 4px solid var(--azul); border-radius: 20px; }
+.act-rpta .rotulo { background: var(--azul); color: #fff; font-family: var(--f-titulo); font-size: 1.9rem; border-radius: 12px; padding: 2px 20px; }
+.act-rpta .texto { font-family: var(--f-titulo); font-size: 2.3rem; color: var(--azul); white-space: nowrap; }
 </style>
 </head>
 
@@ -745,12 +791,12 @@ footer {
 
 <!-- ================= BARRA DE NAVEGACIÓN ================= -->
 <footer>
-  <button class="btn" id="prev" onclick="go(-1)">◀ Anterior</button>
+  <button class="btn" id="prev" onclick="go(-1); this.blur()">◀ Anterior</button>
   <div class="nav-mid">
     <div id="dots"></div>
     <span>El poder del agua · Plan lector matemático</span>
   </div>
-  <button class="btn" id="next" onclick="go(1)">Siguiente ▶</button>
+  <button class="btn" id="next" onclick="go(1); this.blur()">Siguiente ▶</button>
 </footer>
 
 <!-- ================= VENTANA: INTRODUCIR UN INTERVALO ================= -->
@@ -808,7 +854,8 @@ let slides = [], cur = 0;
 const PESTANAS = [
   { txt: 'Plan lector', tab: 'lector' },
   { txt: 'Barra',       tab: 'barra'  },
-  { txt: 'Laboratorio', tab: 'lab'    }
+  { txt: 'Laboratorio', tab: 'lab'    },
+  { txt: 'Actividades', tab: 'act'    }   // plantilla de actividades (sección F)
 ];
 
 /* Pone el marco (olas + pestañas) arriba de cada pantalla con class="con-marco" */
@@ -830,10 +877,11 @@ function irPestana(tab) { goTo(slides.findIndex(s => s.dataset.tab === tab)); }
 function initSlides() {
   armarEjemplos();      // crea las pantallas de ejemplos (sección C)
   armarLabEjemplos();   // botones de ejemplo de la pestaña Laboratorio
+  armarActividades();   // una pantalla por cada actividad (sección F)
   armarMarcos();
   slides = [...document.querySelectorAll('#stage .slide')];
   document.getElementById('dots').innerHTML =
-    slides.map((_, i) => `<button class="dot" onclick="goTo(${i})" aria-label="Pantalla ${i + 1}"></button>`).join('');
+    slides.map((_, i) => `<button class="dot" onclick="goTo(${i}); this.blur()" aria-label="Pantalla ${i + 1}"></button>`).join('');
   window.addEventListener('resize', fit);
   document.addEventListener('keydown', onKey);
   if (document.fonts) document.fonts.ready.then(fit);
@@ -842,7 +890,8 @@ function initSlides() {
 }
 
 /* Muestra la pantalla número i */
-function goTo(i) {
+function goTo(i, atras) {            // atras = true cuando se llega con "anterior"
+  const antes = cur;
   cur = Math.max(0, Math.min(slides.length - 1, i));
   slides.forEach((s, k) => s.classList.toggle('on', k === cur));
   document.querySelectorAll('#dots .dot').forEach((d, k) => d.classList.toggle('on', k === cur));
@@ -852,9 +901,10 @@ function goTo(i) {
   if (slides[cur].dataset.tab === 'barra') entrarBarra();   // prepara la barra con el ejemplo elegido
   else pausarAguja();                                       // fuera de la barra, la aguja no gasta CPU
   if (slides[cur].dataset.tab === 'lab') entrarLab();       // carga el ejemplo en el laboratorio
+  if (slides[cur].dataset.tab === 'act' && cur !== antes) entrarAct(slides[cur], atras);   // actividad: empieza en el paso 1 (o al final si se vuelve atrás)
   fit();
 }
-const go = d => goTo(cur + d);   // go(1) = siguiente, go(-1) = anterior
+const go = d => goTo(cur + d, d < 0);   // go(1) = siguiente, go(-1) = anterior
 
 /* Ajusta la pantalla actual al televisor: nunca queda cortada ni hay scroll */
 const MAX_ZOOM = 1.6;                               // límite de ampliación en pantallas muy grandes
@@ -884,7 +934,13 @@ function onKey(e) {
     return;
   }
 
-  if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || (k === ' ' && e.target.tagName !== 'BUTTON')) go(1);
+  // En una actividad, avanzar/retroceder revela o esconde pasos; solo al terminar se cambia de pantalla
+  const avanza = k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || (k === ' ' && e.target.tagName !== 'BUTTON');
+  const retrocede = k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp';
+  if (avanza && avanzarAct()) { e.preventDefault(); return; }
+  if (retrocede && retrocederAct()) { e.preventDefault(); return; }
+
+  if (avanza) go(1);
   else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') go(-1);
   else if (k === 'Home') goTo(0);
   else if (k === 'End') goTo(slides.length - 1);
@@ -1226,60 +1282,77 @@ function renderLab() {
   dibujarRectaLab();
 }
 
+/* Textos que usan el laboratorio y las actividades (abierto = < y paréntesis; cerrado = ≤ y corchete) */
+function textoDesigualdad(a, b, aAbierto, bAbierto) {
+  return `${fmtL(a)} ${aAbierto ? '<' : '≤'} x ${bAbierto ? '<' : '≤'} ${fmtL(b)}`;
+}
+function textoIntervalo(a, b, aAbierto, bAbierto) {
+  return `${aAbierto ? '(' : '['}${fmtL(a)}; ${fmtL(b)}${bAbierto ? ')' : ']'}`;
+}
+
 /* Tarjetas: desigualdad, notación y amplitud */
 function actualizarTarjetasLab() {
   const { a, b, leftOpen, rightOpen } = lab;
-  const li = leftOpen ? '<' : '≤';
-  const ri = rightOpen ? '<' : '≤';
-  const lb = leftOpen ? '(' : '[';
-  const rb = rightOpen ? ')' : ']';
-
-  document.getElementById('lab-card-inequality').textContent = `${fmtL(a)} ${li} x ${ri} ${fmtL(b)}`;
-  document.getElementById('lab-card-notation').textContent = `${lb}${fmtL(a)}; ${fmtL(b)}${rb}`;
+  document.getElementById('lab-card-inequality').textContent = textoDesigualdad(a, b, leftOpen, rightOpen);
+  document.getElementById('lab-card-notation').textContent = textoIntervalo(a, b, leftOpen, rightOpen);
   document.getElementById('lab-card-amplitude').textContent = `${fmtL(b - a)} L`;
 }
 
 /* Valor en litros → posición (%) sobre la recta */
-function posLab(v) {
-  return PAD_LAB + ((v - lab.scaleMin) / (lab.scaleMax - lab.scaleMin)) * (100 - 2 * PAD_LAB);
+function posLab(v, e = lab) {          // e = datos de la recta (por defecto, el laboratorio)
+  return PAD_LAB + ((v - e.scaleMin) / (e.scaleMax - e.scaleMin)) * (100 - 2 * PAD_LAB);
 }
 
 /* Marca de separación de la recta: 0,5 L para escalas normales; 1 L si es muy larga */
 function pasoLab(range) { return range > 5.5 ? 1 : 0.5; }
 
-/* Dibuja eje, marcas, barra, tallos y círculos de los extremos */
-function dibujarRectaLab() {
-  const { a, b, leftOpen, rightOpen, scaleMin, scaleMax } = lab;
+/* Dibuja eje, marcas, barra, tallos y círculos de los extremos.
+   Sin argumentos dibuja el laboratorio (como siempre). Las actividades la reutilizan así:
+   destino = elemento donde dibujar, e = datos {a, b, leftOpen, rightOpen, scaleMin, scaleMax},
+   nivel = 1 solo eje y números · 2 + extremos con su punto · 3 + tramo resaltado,
+   animar = true para que el tramo "crezca". */
+function dibujarRectaLab(destino = document.getElementById('recta-lab'), e = lab, nivel = 3, animar = false) {
+  const { a, b, leftOpen, rightOpen, scaleMin, scaleMax } = e;
+  const interactiva = destino.id === 'recta-lab';      // solo el laboratorio se puede arrastrar
   const range = scaleMax - scaleMin;
   const step = pasoLab(range);
   const extremos = [a, b];
 
   let html = '<div class="lab-eje"></div>';
 
-  // marcas normales (se omiten las que quedan muy cerca de un extremo)
+  // marcas normales (desde el nivel 2 se omiten las que quedan muy cerca de un extremo)
   const n = Math.floor(range / step + 1e-6);
   for (let i = 0; i <= n; i++) {
     const v = red1(scaleMin + i * step);
     if (v > scaleMax + 1e-6) break;
-    if (extremos.some(e => Math.abs(v - e) < 0.25)) continue;
-    html += `<div class="lab-tick" style="left:${posLab(v)}%"><i></i><span>${fmtL(v)}</span></div>`;
+    if (nivel >= 2 && extremos.some(x => Math.abs(v - x) < 0.25)) continue;
+    html += `<div class="lab-tick" style="left:${posLab(v, e)}%"><i></i><span>${fmtL(v)}</span></div>`;
   }
 
+  const left = posLab(a, e);
+  const right = posLab(b, e);
+
   // marcas verdes de los dos extremos
-  html += `<div class="lab-tick extremo" style="left:${posLab(a)}%"><i></i><span>${fmtL(a)}</span></div>`;
-  html += `<div class="lab-tick extremo" style="left:${posLab(b)}%"><i></i><span>${fmtL(b)}</span></div>`;
+  if (nivel >= 2) {
+    html += `<div class="lab-tick extremo" style="left:${left}%"><i></i><span>${fmtL(a)}</span></div>`;
+    html += `<div class="lab-tick extremo" style="left:${right}%"><i></i><span>${fmtL(b)}</span></div>`;
+  }
 
-  const left = posLab(a);
-  const right = posLab(b);
+  // tramo resaltado
+  if (nivel >= 3) {
+    html += `<div ${interactiva ? 'id="lab-barra"' : ''} class="lab-barra ${animar ? 'anim' : ''}" style="left:${left}%;width:${right - left}%"></div>`;
+  }
 
-  html += `<div id="lab-barra" class="lab-barra" style="left:${left}%;width:${right - left}%"></div>`;
-  html += `<div class="lab-tallo" style="left:${left}%"></div>`;
-  html += `<div class="lab-tallo" style="left:${right}%"></div>`;
-  html += `<div id="lab-punto-a" class="lab-punto ${leftOpen ? 'abierto' : ''}" style="left:${left}%"></div>`;
-  html += `<div id="lab-punto-b" class="lab-punto ${rightOpen ? 'abierto' : ''}" style="left:${right}%"></div>`;
+  // tallos y círculos (abierto = blanco, cerrado = lleno)
+  if (nivel >= 2) {
+    html += `<div class="lab-tallo" style="left:${left}%"></div>`;
+    html += `<div class="lab-tallo" style="left:${right}%"></div>`;
+    html += `<div ${interactiva ? 'id="lab-punto-a"' : ''} class="lab-punto ${leftOpen ? 'abierto' : ''}" style="left:${left}%"></div>`;
+    html += `<div ${interactiva ? 'id="lab-punto-b"' : ''} class="lab-punto ${rightOpen ? 'abierto' : ''}" style="left:${right}%"></div>`;
+  }
 
-  document.getElementById('recta-lab').innerHTML = html;
-  attachDragLab();
+  destino.innerHTML = html;
+  if (interactiva) attachDragLab();
 }
 
 /* Un intervalo modificado deja de ser el ejemplo: pasa a ser de práctica */
@@ -1442,10 +1515,152 @@ function aplicarIntervaloManual() {
 }
 
 /* ============================================================
+   F. ACTIVIDADES: plantilla de pantallas con revelado progresivo
+   Cada elemento de ACTIVIDADES crea UNA pantalla (después de Laboratorio).
+   Campos:
+     titulo, contexto (opcional), pregunta,
+     imagen   {archivo, credito, alt}   solo de adorno: sin números ni datos,
+     solucion {a, b, aAbierto, bAbierto}   de aquí sale TODO el dibujo,
+     explicacion  (breve: unas 150 letras como máximo, para que quepa),
+     respuesta (opcional: si falta se calcula con la desigualdad y el intervalo).
+   ============================================================ */
+const ACTIVIDADES = [
+  { titulo: 'Agua para el día',
+    contexto: 'Según la OMS, una persona adulta debe tomar como mínimo 1,5 L y como máximo 2 L de agua al día.',
+    pregunta: '¿Qué cantidades x de agua, en litros, cumplen la recomendación?',
+    imagen: { archivo: 'imagenes/vaso-agua.jpg',                  // VERIFICAR: poner la foto real en esa carpeta
+              credito: 'Foto: VERIFICAR autor y licencia',        // VERIFICAR: crédito real
+              alt: 'Un vaso de agua' },
+    solucion: { a: 1.5, b: 2, aAbierto: false, bAbierto: false },
+    explicacion: '«Como mínimo» y «como máximo» sí incluyen el 1,5 y el 2: los puntos son cerrados y se escribe con corchetes [ ].' },
+
+  { titulo: 'Caminata con agua',
+    contexto: 'En una caminata de 3 horas, el guía pide llevar más de 1 L pero no más de 2,5 L de agua por persona.',   // VERIFICAR: valores de ejemplo
+    pregunta: '¿Cuántos litros x de agua puede llevar cada persona?',
+    imagen: { archivo: 'imagenes/caminata.jpg',                   // VERIFICAR: poner la foto real en esa carpeta
+              credito: 'Foto: VERIFICAR autor y licencia',        // VERIFICAR: crédito real
+              alt: 'Un grupo caminando por un sendero' },
+    solucion: { a: 1, b: 2.5, aAbierto: true, bAbierto: false },
+    explicacion: '«Más de 1» no incluye el 1: punto abierto y paréntesis (. «No más de 2,5» sí lo incluye: punto cerrado y corchete ].' }
+];
+
+const ACT_PASOS = 6;   // 1 consigna · 2 recta · 3 extremos · 4 tramo · 5 explicación · 6 RPTA
+
+/* Dibujo simple (una gota y olas) que se muestra si la imagen no carga */
+const ACT_SVG_ADORNO = '<svg viewBox="0 0 220 192" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Dibujo de una gota de agua">' +
+  '<rect width="220" height="192" fill="#e3f6ff"/>' +
+  '<path d="M110 26 C90 60 60 90 60 124 a50 50 0 0 0 100 0 C160 90 130 60 110 26 Z" fill="#00bcf2"/>' +
+  '<path d="M84 118 a26 26 0 0 0 16 30" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round" opacity=".8"/>' +
+  '<path d="M0 166 Q27 151 55 166 T110 166 T165 166 T220 166 V192 H0 Z" fill="#0070c0" opacity=".85"/></svg>';
+
+/* Si la foto no carga, la cambia por el dibujo y el crédito pasa a decir "Ilustración" */
+function actImgFallo(img) {
+  const marco = img.parentNode;
+  marco.innerHTML = ACT_SVG_ADORNO;
+  const cred = marco.parentNode.querySelector('.act-credito');
+  if (cred) cred.textContent = 'Ilustración';
+}
+
+/* Respuesta: la escrita a mano o, si falta, "desigualdad → intervalo" calculados de solucion */
+function respuestaAct(a) {
+  if (a.respuesta) return a.respuesta;
+  const s = a.solucion;
+  return `${textoDesigualdad(s.a, s.b, s.aAbierto, s.bAbierto)}  →  ${textoIntervalo(s.a, s.b, s.aAbierto, s.bAbierto)}`;
+}
+
+/* Datos de solucion → formato que entiende dibujarRectaLab (la recta sale de 0 a un tope redondo) */
+function rectaDeSolucion(s) {
+  return { a: s.a, b: s.b, leftOpen: !!s.aAbierto, rightOpen: !!s.bAbierto,
+           scaleMin: 0, scaleMax: Math.max(3, Math.ceil((s.b + 0.5) * 2) / 2) };
+}
+
+/* Crea una pantalla por actividad, justo después de Laboratorio */
+function armarActividades() {
+  const comilla = t => String(t).replace(/"/g, '&quot;');
+  const html = ACTIVIDADES.map((a, i) => {
+    const im = a.imagen;
+    const foto = im && im.archivo
+      ? `<img src="${comilla(im.archivo)}" alt="${comilla(im.alt || '')}" onerror="actImgFallo(this)">`
+      : ACT_SVG_ADORNO;
+    return `
+    <section class="slide con-marco" data-tab="act" data-act="${i}" data-paso="1">
+      <div class="pantalla act-pantalla">
+        <div class="act-titulo">
+          <span class="chip">Actividad ${i + 1} de ${ACTIVIDADES.length}</span>
+          <h2>${a.titulo}</h2>
+          <span class="act-paso"></span>
+        </div>
+        <div class="act-consigna">
+          <div class="act-contexto">${a.contexto || ''}</div>
+          <div class="pregunta">${a.pregunta}</div>
+        </div>
+        <div class="act-fila">
+          <figure class="act-foto">
+            <div class="act-img">${foto}</div>
+            <figcaption class="act-credito">${im && im.archivo ? (im.credito || '') : 'Ilustración'}</figcaption>
+          </figure>
+          <div class="act-modelo">
+            <h3>Modelización · recta numérica</h3>
+            <div class="lab-oculta act-cuaderno">✍️ Resuelve en tu cuaderno</div>
+            <div class="lab-recta act-recta" hidden></div>
+          </div>
+          <div class="act-expl-zona">
+            <div class="ficha-dato act-expl act-vel"><b>Explicación</b>${a.explicacion}</div>
+          </div>
+        </div>
+        <div class="act-rpta"><span class="rotulo">RPTA</span><span class="texto act-vel">${respuestaAct(a)}</span></div>
+      </div>
+    </section>`;
+  }).join('');
+  document.getElementById('laboratorio-slide').insertAdjacentHTML('afterend', html);
+}
+
+/* Muestra u oculta cada zona según el paso (1 a 6). Las zonas nunca se mueven. */
+function pintarAct(sec) {
+  const a = ACTIVIDADES[+sec.dataset.act];
+  const paso = +sec.dataset.paso;
+  const q = sel => sec.querySelector(sel);
+
+  q('.act-paso').textContent = `Paso ${paso} de ${ACT_PASOS}`;
+  q('.act-cuaderno').hidden = paso !== 1;     // paso 1: "Resuelve en tu cuaderno"
+  q('.act-recta').hidden = paso < 2;          // desde el paso 2: la recta
+  if (paso >= 2) {
+    // paso 2 → nivel 1 (números) · paso 3 → nivel 2 (extremos) · paso 4 o más → nivel 3 (tramo)
+    dibujarRectaLab(q('.act-recta'), rectaDeSolucion(a.solucion), Math.min(paso, 4) - 1, paso === 4);
+  }
+  q('.act-expl').classList.toggle('ver', paso >= 5);
+  q('.act-rpta .texto').classList.toggle('ver', paso >= 6);
+}
+
+/* Pantalla de actividad que se está viendo (o null si es otra) */
+const actActual = () => (slides[cur] && slides[cur].dataset.tab === 'act') ? slides[cur] : null;
+
+/* Devuelven true si el paso se movió dentro de la actividad; false = ya no hay más pasos, que cambie la pantalla */
+function avanzarAct() {
+  const s = actActual();
+  if (!s || +s.dataset.paso >= ACT_PASOS) return false;
+  s.dataset.paso = +s.dataset.paso + 1;
+  pintarAct(s);
+  return true;
+}
+function retrocederAct() {
+  const s = actActual();
+  if (!s || +s.dataset.paso <= 1) return false;
+  s.dataset.paso = +s.dataset.paso - 1;
+  pintarAct(s);
+  return true;
+}
+
+/* Al llegar a una actividad: paso 1 (o completa si se viene de la siguiente pantalla) */
+function entrarAct(sec, alFinal) {
+  sec.dataset.paso = alFinal ? ACT_PASOS : 1;
+  pintarAct(sec);
+}
+
+/* ============================================================
    E. INICIO
    ============================================================ */
 initSlides();
 </script>
 </body>
 </html>
-//a
